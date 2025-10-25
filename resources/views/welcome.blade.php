@@ -166,9 +166,9 @@
                 feather.replace();
             }
 
-            const getSHA256Hash = async (input) => {
+            const getSHA128Hash = async (input) => {
                 const textAsBuffer = new TextEncoder().encode(input);
-                const hashBuffer = await window.crypto.subtle.digest("SHA-256", textAsBuffer);
+                const hashBuffer = await window.crypto.subtle.digest("SHA-1", textAsBuffer);
                 const hashArray = Array.from(new Uint8Array(hashBuffer));
                 const hash = hashArray
                     .map((item) => item.toString(16).padStart(2, "0"))
@@ -192,39 +192,65 @@
 
                         JSZip.loadAsync(content).then(zip => {
                             zip.file("word/document.xml").async("string").then(xmlContent => {
-                                const xmlOBJ = xml2js(xmlContent, {compact: true, spaces: 4});
+                                const xmlOBJ = xml2js(xmlContent, {compact: false, spaces: 4});
                                 console.log(xmlOBJ)
-                                let searchTerm = xmlContent.replace(/<[^>]*>/g, '').split("data")[1].split("nat")[0];
-                                let lastDotIndex = searchTerm.lastIndexOf('.');
+                                let splitXML = xmlContent.replace(/<[^>]*>/g, '').split("data")[1].split("nat");
+
+                                let patient_name = splitXML[0];
+                                const city_birthday_split = splitXML[1].split("ricoverat")[0].split(" ")
+                                const city = city_birthday_split[2]
+                                const birthday = city_birthday_split[4].replace(",", "")
+
+                                let recovered_date = splitXML[1].split(" con diagnosi")[0].split(" ")
+                                recovered_date = recovered_date[recovered_date.length - 1].replace(",", "")
+                                console.log(recovered_date, city, birthday)
+
+                                let lastDotIndex = patient_name.lastIndexOf('.');
 
                                 if (lastDotIndex > -1) {
-                                    searchTerm = searchTerm.substring(lastDotIndex + 1);
+                                    patient_name = patient_name.substring(lastDotIndex + 1);
                                 }
 
-                                searchTerm = searchTerm.trim().replace(",", "")
+                                patient_name = patient_name.trim().replace(",", "")
 
-                                console.log(searchTerm)
+                                console.log(patient_name)
 
-                                let nameParts = searchTerm.split(" ")
+                                let nameParts = patient_name.split(" ")
 
-                                getSHA256Hash(searchTerm).then(replaceTerm => {
+                                getSHA128Hash(`${patient_name} ${city} ${birthday}`).then(replaceTerm => {
                                     const findings = []
 
+                                    // Verifica che la struttura esista
+                                    if (!xmlOBJ["elements"] || !xmlOBJ["elements"][0] || !xmlOBJ["elements"][0]["elements"] || !xmlOBJ["elements"][0]["elements"][0]) {
+                                        console.error("Struttura XML non valida");
+                                        return;
+                                    }
 
-                                    xmlOBJ["w:document"]["w:body"]["w:p"].forEach((paragraph,index) => {
-                                        let row = paragraph["w:r"]
-                                        if (row == undefined || !Array.isArray(row)) return
+                                    const documentBody = xmlOBJ["elements"][0]["elements"][0]["elements"];
 
-                                        nameParts.forEach(part => {
-                                            const row_index = row.findIndex((word) => {return word?.["w:t"]?.["_text"] == part || word?.["w:t"]?.["_text"] == searchTerm})
-                                            if(row_index >= 0){
-                                                findings.push([index, row_index])
-                                                if(row[row_index]["w:t"]["_text"] == searchTerm){
-                                                    findings.push([index, row_index+1])
+                                    documentBody.forEach((paragraph, index) => {
+                                        if (paragraph.type !== "element" || paragraph.name !== "w:p") return;
+
+                                        let rows = paragraph["elements"]?.filter(el => el.name === "w:r");
+                                        if (!rows || rows.length === 0) return;
+
+                                        rows.forEach((row, row_index) => {
+                                            nameParts.forEach(part => {
+                                                const textElements = row["elements"]?.filter(el => el.name === "w:t");
+                                                if (textElements && textElements.length > 0) {
+                                                    textElements.forEach(textEl => {
+                                                        const textContent = textEl["elements"]?.[0]?.text;
+                                                        if (textContent === part || textContent === patient_name) {
+                                                            findings.push([index, row_index]);
+                                                            if (textContent === patient_name) {
+                                                                findings.push([index, row_index + 1]);
+                                                            }
+                                                        }
+                                                    });
                                                 }
-                                            }
-                                        })
-                                    })
+                                            });
+                                        });
+                                    });
 
                                     const merged = findings.reduce((acc, [key, value]) => {
                                         if (!acc[key]) acc[key] = [];
@@ -232,56 +258,99 @@
                                         return acc;
                                     }, {});
 
-                                    console.log(merged)
+                                    console.log(merged);
 
                                     Object.keys(merged).forEach(paragraph_idx => {
-                                        let arr = merged[paragraph_idx]
-                                        arr.sort(function(a, b){return a-b});
-                                        let start = arr[0]
-                                        let end = arr[1]
 
-                                        xmlOBJ["w:document"]["w:body"]["w:p"][paragraph_idx]["w:r"].splice(start, end - start + 1, {
-                                            "_attributes": {
-                                                "w:rsidR": "00EC4CF1",
-                                                "xml:space": "preserve"
-                                            },
-                                            "w:rPr": {
-                                                "w:rFonts": {
-                                                    "_attributes": {
-                                                        "w:ascii": "Times New Roman",
-                                                        "w:hAnsi": "Times New Roman"
-                                                    }
-                                                }
-                                            },
-                                            "w:t": {
-                                                "_text": `${replaceTerm}`
+                                        const range = (start, stop, step = 1) => {
+                                            if (stop === undefined) {
+                                                stop = start;
+                                                start = 0;
                                             }
-                                        })
-                                    })
+                                            if (step === 0) throw new Error("step cannot be 0");
 
-                                    const data = js2xml(xmlOBJ,{compact: true, spaces: 4})
-                                    // console.log(data)
-                                    // zip.file('word/document.xml', data);
+                                            const result = [];
+                                            if (step > 0) {
+                                                for (let i = start; i < stop; i += step) result.push(i);
+                                            } else {
+                                                for (let i = start; i > stop; i += step) result.push(i);
+                                            }
+                                            return result;
+                                        };
 
-                                    // zip.generateAsync({
-                                    //     type: 'blob',
-                                    //     // compression: "DEFLATE"
-                                    // }).then( blob => {
-                                    //     const url = URL.createObjectURL(blob);
+                                        let arr = merged[paragraph_idx];
+                                        arr.sort(function(a, b) { return a - b; });
+                                        let start = arr[0];
+                                        let end = arr[arr.length - 1];
 
-                                    //     const a = document.createElement('a');
-                                    //     a.style.display = 'none';
-                                    //     a.href = url;
-                                    //     let yourDate = new Date()
+                                        let paragraph = documentBody[paragraph_idx];
+                                        if (!paragraph || !paragraph["elements"]) return;
 
-                                    //     a.download = `${replaceTerm}_anonymized_${yourDate.toISOString().split('T')[0]}.docx`
+                                        // Trova tutti i w:r elements
+                                        let allElements = paragraph["elements"];
 
-                                    //     document.body.appendChild(a);
-                                    //     a.click();
+                                        // Inserisci il nuovo elemento
+                                        const insertPosition = start+1;
+                                        console.log(insertPosition, end+1)
+                                        // Rimuovi in ordine inverso per non alterare gli indici
+                                        range(insertPosition, end+1).reverse().forEach(idx => {
+                                            console.log(idx)
+                                            allElements.splice(idx, 1);
+                                        });
 
-                                    //     document.body.removeChild(a);
-                                    //     URL.revokeObjectURL(url);
-                                    // });
+                                        const newElement = {
+                                            "type": "element",
+                                            "name": "w:r",
+                                            "elements": [
+                                                {
+                                                    "type": "element",
+                                                    "name": "w:rPr",
+                                                    "elements": [
+                                                        {
+                                                            "type": "element",
+                                                            "name": "w:rFonts",
+                                                            "attributes": {
+                                                                "w:ascii": "Times New Roman",
+                                                                "w:hAnsi": "Times New Roman"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "element",
+                                                    "name": "w:t",
+                                                    "elements": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": `${replaceTerm}`
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        };
+
+                                        allElements.splice(insertPosition, 0, newElement);
+                                    });
+
+                                    const data = js2xml(xmlOBJ, { compact: false, spaces: 4 });
+                                    zip.file('word/document.xml', data);
+
+                                    zip.generateAsync({
+                                        type: 'blob',
+                                    }).then( blob => {
+                                        const url = URL.createObjectURL(blob);
+
+                                        const a = document.createElement('a');
+                                        a.style.display = 'none';
+                                        a.href = url;
+                                        a.download = `${replaceTerm}-${recovered_date.replaceAll("/", "-")}-${Date.now()}.docx`
+
+                                        document.body.appendChild(a);
+                                        a.click();
+
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                    });
                                 })
                             })
 
