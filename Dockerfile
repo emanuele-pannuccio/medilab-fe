@@ -11,9 +11,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY --chown=www-data:www-data . .
 
-RUN composer install --no-interaction
+RUN chmod u+x /var/www/html/entrypoint.sh
 
 EXPOSE 8000
 
 USER www-data
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+
+ENTRYPOINT ["sh","/var/www/html/entrypoint.sh" ]
