@@ -54,7 +54,6 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.67.1/build/docxtemplater.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xml-js@1.6.11/dist/xml-js.min.js"></script>
 
@@ -194,6 +193,7 @@
                         JSZip.loadAsync(content).then(zip => {
                             zip.file("word/document.xml").async("string").then(xmlContent => {
                                 const xmlOBJ = xml2js(xmlContent, {compact: true, spaces: 4});
+                                console.log(xmlOBJ)
                                 let searchTerm = xmlContent.replace(/<[^>]*>/g, '').split("data")[1].split("nat")[0];
                                 let lastDotIndex = searchTerm.lastIndexOf('.');
 
@@ -207,78 +207,81 @@
 
                                 let nameParts = searchTerm.split(" ")
 
-                                console.log(xmlOBJ)
-
                                 getSHA256Hash(searchTerm).then(replaceTerm => {
                                     const findings = []
 
-                                    xmlOBJ["w:document"]["w:body"]["w:p"].forEach((paragraph,index) => {
-                                        let row = paragraph["w:r"]
-                                        if (row == undefined || !Array.isArray(row)) return
 
-                                        nameParts.forEach(part => {
-                                            const row_index = row.findIndex((word) => {return word?.["w:t"]?.["_text"] == part || word?.["w:t"]?.["_text"] == searchTerm})
-                                            if(row_index >= 0){
-                                                findings.push([index, row_index])
-                                                if(row[row_index]["w:t"]["_text"] == searchTerm){
-                                                    findings.push([index, row_index+1])
-                                                }
-                                            }
-                                        })
-                                    })
+                                    // xmlOBJ["w:document"]["w:body"]["w:p"].forEach((paragraph,index) => {
+                                    //     let row = paragraph["w:r"]
+                                    //     if (row == undefined || !Array.isArray(row)) return
 
-                                    const merged = findings.reduce((acc, [key, value]) => {
-                                        if (!acc[key]) acc[key] = [];
-                                        acc[key].push(value);
-                                        return acc;
-                                    }, {});
+                                    //     nameParts.forEach(part => {
+                                    //         const row_index = row.findIndex((word) => {return word?.["w:t"]?.["_text"] == part || word?.["w:t"]?.["_text"] == searchTerm})
+                                    //         if(row_index >= 0){
+                                    //             findings.push([index, row_index])
+                                    //             if(row[row_index]["w:t"]["_text"] == searchTerm){
+                                    //                 findings.push([index, row_index+1])
+                                    //             }
+                                    //         }
+                                    //     })
+                                    // })
 
-                                    console.log(merged)
+                                    // const merged = findings.reduce((acc, [key, value]) => {
+                                    //     if (!acc[key]) acc[key] = [];
+                                    //     acc[key].push(value);
+                                    //     return acc;
+                                    // }, {});
 
-                                    Object.keys(merged).forEach(paragraph_idx => {
-                                        let arr = merged[paragraph_idx]
-                                        arr.sort(function(a, b){return a-b});
-                                        let start = arr[0]
-                                        let end = arr[1]
+                                    // console.log(merged)
 
-                                        xmlOBJ["w:document"]["w:body"]["w:p"][paragraph_idx]["w:r"].splice(start, end - start + 1, {
-                                                "_attributes": {
-                                                    "w:rsidR": "00EC4CF1"
-                                                },
-                                                "w:rPr": {
-                                                    "w:rFonts": {
-                                                        "_attributes": {
-                                                            "w:ascii": "Times New Roman",
-                                                            "w:hAnsi": "Times New Roman"
-                                                        }
-                                                    }
-                                                },
-                                                "w:t": {
-                                                    "_text": `${replaceTerm}`
-                                                }
-                                            })
-                                    })
+                                    // Object.keys(merged).forEach(paragraph_idx => {
+                                    //     let arr = merged[paragraph_idx]
+                                    //     arr.sort(function(a, b){return a-b});
+                                    //     let start = arr[0]
+                                    //     let end = arr[1]
 
-                                    const data = js2xml(xmlOBJ,{compact: true, spaces: 4})
-                                    zip.file('word/document.xml', data);
+                                    //     xmlOBJ["w:document"]["w:body"]["w:p"][paragraph_idx]["w:r"].splice(start, end - start + 1, {
+                                    //         "_attributes": {
+                                    //             "w:rsidR": "00EC4CF1",
+                                    //             "xml:space": "preserve"
+                                    //         },
+                                    //         "w:rPr": {
+                                    //             "w:rFonts": {
+                                    //                 "_attributes": {
+                                    //                     "w:ascii": "Times New Roman",
+                                    //                     "w:hAnsi": "Times New Roman"
+                                    //                 }
+                                    //             }
+                                    //         },
+                                    //         "w:t": {
+                                    //             "_text": `${replaceTerm}`
+                                    //         }
+                                    //     })
+                                    // })
 
-                                    zip.generateAsync({
-                                        type: 'blob',
-                                        compression: "DEFLATE"
-                                    }).then( blob => {
-                                        const url = URL.createObjectURL(blob);
+                                    // const data = js2xml(xmlOBJ,{compact: true, spaces: 4})
+                                    // console.log(data)
+                                    // zip.file('word/document.xml', data);
 
-                                        const a = document.createElement('a');
-                                        a.style.display = 'none';
-                                        a.href = url;
-                                        a.download = file.name.replace('.docx', '_anonymized.docx');
+                                    // zip.generateAsync({
+                                    //     type: 'blob',
+                                    //     // compression: "DEFLATE"
+                                    // }).then( blob => {
+                                    //     const url = URL.createObjectURL(blob);
 
-                                        document.body.appendChild(a);
-                                        a.click();
+                                    //     const a = document.createElement('a');
+                                    //     a.style.display = 'none';
+                                    //     a.href = url;
+                                    //     let yourDate = new Date()
 
-                                        document.body.removeChild(a);
-                                        URL.revokeObjectURL(url);
-                                    });
+                                    //     a.download = `${replaceTerm}_anonymized_${yourDate.toISOString().split('T')[0]}.docx`
+
+                                    //     document.body.appendChild(a);
+                                    //     a.click();
+
+                                    //     document.body.removeChild(a);
+                                    //     URL.revokeObjectURL(url);
+                                    // });
                                 })
                             })
 
