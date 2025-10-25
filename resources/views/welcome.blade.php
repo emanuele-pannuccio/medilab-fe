@@ -211,55 +211,55 @@
                                     const findings = []
 
 
-                                    // xmlOBJ["w:document"]["w:body"]["w:p"].forEach((paragraph,index) => {
-                                    //     let row = paragraph["w:r"]
-                                    //     if (row == undefined || !Array.isArray(row)) return
+                                    xmlOBJ["w:document"]["w:body"]["w:p"].forEach((paragraph,index) => {
+                                        let row = paragraph["w:r"]
+                                        if (row == undefined || !Array.isArray(row)) return
 
-                                    //     nameParts.forEach(part => {
-                                    //         const row_index = row.findIndex((word) => {return word?.["w:t"]?.["_text"] == part || word?.["w:t"]?.["_text"] == searchTerm})
-                                    //         if(row_index >= 0){
-                                    //             findings.push([index, row_index])
-                                    //             if(row[row_index]["w:t"]["_text"] == searchTerm){
-                                    //                 findings.push([index, row_index+1])
-                                    //             }
-                                    //         }
-                                    //     })
-                                    // })
+                                        nameParts.forEach(part => {
+                                            const row_index = row.findIndex((word) => {return word?.["w:t"]?.["_text"] == part || word?.["w:t"]?.["_text"] == searchTerm})
+                                            if(row_index >= 0){
+                                                findings.push([index, row_index])
+                                                if(row[row_index]["w:t"]["_text"] == searchTerm){
+                                                    findings.push([index, row_index+1])
+                                                }
+                                            }
+                                        })
+                                    })
 
-                                    // const merged = findings.reduce((acc, [key, value]) => {
-                                    //     if (!acc[key]) acc[key] = [];
-                                    //     acc[key].push(value);
-                                    //     return acc;
-                                    // }, {});
+                                    const merged = findings.reduce((acc, [key, value]) => {
+                                        if (!acc[key]) acc[key] = [];
+                                        acc[key].push(value);
+                                        return acc;
+                                    }, {});
 
-                                    // console.log(merged)
+                                    console.log(merged)
 
-                                    // Object.keys(merged).forEach(paragraph_idx => {
-                                    //     let arr = merged[paragraph_idx]
-                                    //     arr.sort(function(a, b){return a-b});
-                                    //     let start = arr[0]
-                                    //     let end = arr[1]
+                                    Object.keys(merged).forEach(paragraph_idx => {
+                                        let arr = merged[paragraph_idx]
+                                        arr.sort(function(a, b){return a-b});
+                                        let start = arr[0]
+                                        let end = arr[1]
 
-                                    //     xmlOBJ["w:document"]["w:body"]["w:p"][paragraph_idx]["w:r"].splice(start, end - start + 1, {
-                                    //         "_attributes": {
-                                    //             "w:rsidR": "00EC4CF1",
-                                    //             "xml:space": "preserve"
-                                    //         },
-                                    //         "w:rPr": {
-                                    //             "w:rFonts": {
-                                    //                 "_attributes": {
-                                    //                     "w:ascii": "Times New Roman",
-                                    //                     "w:hAnsi": "Times New Roman"
-                                    //                 }
-                                    //             }
-                                    //         },
-                                    //         "w:t": {
-                                    //             "_text": `${replaceTerm}`
-                                    //         }
-                                    //     })
-                                    // })
+                                        xmlOBJ["w:document"]["w:body"]["w:p"][paragraph_idx]["w:r"].splice(start, end - start + 1, {
+                                            "_attributes": {
+                                                "w:rsidR": "00EC4CF1",
+                                                "xml:space": "preserve"
+                                            },
+                                            "w:rPr": {
+                                                "w:rFonts": {
+                                                    "_attributes": {
+                                                        "w:ascii": "Times New Roman",
+                                                        "w:hAnsi": "Times New Roman"
+                                                    }
+                                                }
+                                            },
+                                            "w:t": {
+                                                "_text": `${replaceTerm}`
+                                            }
+                                        })
+                                    })
 
-                                    // const data = js2xml(xmlOBJ,{compact: true, spaces: 4})
+                                    const data = js2xml(xmlOBJ,{compact: true, spaces: 4})
                                     // console.log(data)
                                     // zip.file('word/document.xml', data);
 
