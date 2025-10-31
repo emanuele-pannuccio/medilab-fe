@@ -8,10 +8,33 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
   @vite(["resources/js/app.js", "resources/css/app.css"])
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center transition-colors duration-300">
 
+@if ($errors->any())
+    <script>
+        const errors = [
+            @foreach ($errors->all() as $error)
+                "{{ $error }}",
+            @endforeach
+        ]
+
+        Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            html: errors.join("<br/>"),
+        });
+    </script>
+    <div class="alert alert-danger">
+        <ul>
+        </ul>
+    </div>
+@endif
     <!-- Pulsante per il Toggle del Tema -->
     <button
         id="theme-toggle"
@@ -40,7 +63,8 @@
             </div>
 
             <!-- Login Form -->
-            <form class="space-y-6">
+            <form class="space-y-6" id="login-form" action="/auth/login" method="POST">
+                @csrf
                 <!-- User ID -->
                 <div>
                     <!-- Aggiorniamo le classi per light/dark mode -->
@@ -49,7 +73,8 @@
                     </label>
                     <input
                         type="text"
-                        id="user-id"
+                        id="email"
+                        name="email"
                         class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 select-none rounded-lg px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                         placeholder="Inserisci il tuo ID utente"
                     >
@@ -64,6 +89,7 @@
                     <input
                         type="password"
                         id="password"
+                        name="password"
                         class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                         placeholder="Inserisci la tua password"
                     >
@@ -88,22 +114,8 @@
         </div>
     </div>
 
-    <!-- Rimuoviamo il link a 'script.js' che non abbiamo -->
-    <!-- <script src="script.js"></script> -->
     <script>
-        // Inizializza le icone Feather
         feather.replace();
-
-        // Handle login form submission
-        document.querySelector('form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // In a real app, this would authenticate with a backend
-            // Per ora, simuliamo il reindirizzamento
-            console.log("Login tentato. Reindirizzamento a dashboard.html...");
-            // window.location.href = 'dashboard.html';
-        });
-
-        // --- Logica per il Toggle del Tema ---
 
         const themeToggleBtn = document.getElementById('theme-toggle');
 
@@ -120,10 +132,6 @@
                 document.documentElement.classList.add('dark');
                 localStorage.theme = 'dark';
             }
-
-            // NON è necessario richiamare feather.replace() qui,
-            // perché le icone sono già nel DOM e vengono mostrate/nascoste
-            // puramente con le classi 'dark:block' e 'dark:hidden' di Tailwind.
         });
     </script>
 </body>
