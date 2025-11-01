@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (Request $request) {
-    return view('home');
+    return view('login');
 })->name("login")->middleware('guest');
 
 Route::prefix('/auth')->group(function(){
