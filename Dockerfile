@@ -1,5 +1,8 @@
 FROM php:8.2-alpine
 
+COPY --from=node:20-alpine /usr/local/bin /usr/local/bin
+COPY --from=node:20-alpine /usr/local/lib/node_modules /usr/local/lib/node_modules
+
 WORKDIR /var/www/html
 
 RUN apk add --no-cache libzip-dev zip shadow \

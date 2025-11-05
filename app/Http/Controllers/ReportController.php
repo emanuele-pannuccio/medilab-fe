@@ -97,7 +97,13 @@ class ReportController extends Controller
             'discharge_date' => "sometimes|date|date_format:Y-m-d H:i:s",
             'discharge_description' => "sometimes|string",
             'patient' => "sometimes|exists:patients,id",
+            'stato' => "sometimes|in:Aperto,Revisione,Chiuso,Analisi",
         ]);
+
+        if ($request->filled('stato')) {
+            $validation["status"] = $validation["stato"];
+        }
+
 
         $report->update($validation);
         $report->save();

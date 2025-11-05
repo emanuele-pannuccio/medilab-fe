@@ -14,7 +14,8 @@ class Report extends Model
         "past_illness_history",
         "clinical_evolution",
         "discharge_date",
-        "discharge_description"
+        "discharge_description",
+        "status"
     ];
     protected $casts = [
         'hospitalization_date' => 'datetime:d-m-Y H:i:s',

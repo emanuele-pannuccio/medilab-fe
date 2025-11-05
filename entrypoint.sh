@@ -6,6 +6,9 @@ if [[ ! -d ./vendor ]]; then
     cp .env.example .env
     php artisan key:generate
     php artisan migrate --force
+    npm install
 fi
 
+# npm run dev &
+npm run dev -- --host 0.0.0.0 &
 php artisan serve --host=0.0.0.0 --port=8000
