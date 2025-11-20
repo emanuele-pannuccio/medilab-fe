@@ -22,6 +22,8 @@ return new class extends Migration
             $table->longText('discharge_description')->nullable();
             $table->foreignId('patientId')->references("id")->on("patients");
             $table->foreignId('doctorId')->references("id")->on("users");
+            $table->string('document');
+            $table->string('documentHash');
             $table->enum("status", array_column(MedicalCaseStatus::cases(), 'value'))->default(MedicalCaseStatus::aperto->value);
             $table->timestamps();
         });

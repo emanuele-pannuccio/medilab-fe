@@ -6,8 +6,9 @@ services:
     volumes:
       - .:/var/www/html
     ports:
-      - "0.0.0.0:80:8000"
-      - "0.0.0.0:5173:5173"
+      - "80:8000"
+      - "8080:8080"
+      - "5173:5173"
   db:
     image: mysql:8.0
     container_name: mysql_db_container

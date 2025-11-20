@@ -9,10 +9,12 @@ use App\Http\Controllers\PatientController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware( "auth:sanctum")->group(function(){
+// middleware( "auth:sanctum")->
+Route::prefix("")->group(function(){
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
     
     Route::prefix('department')->group(function () {
         Route::get('/{department}', [DepartmentController::class, 'show']);
@@ -30,13 +32,18 @@ Route::middleware( "auth:sanctum")->group(function(){
         Route::post('', [DoctorController::class, 'store']);
         Route::get('', [DoctorController::class, 'index']);
     });
+    
+    Route::get('/document', [ReportController::class, 'get_documents']);
+    Route::post('/document', [ReportController::class, 'elaborate_document']);
 
     Route::prefix('report')->group(function () {
         Route::get('/{report}', [ReportController::class, 'show']);
+        Route::get('/{report}/document', [ReportController::class, 'get_document']);
         Route::delete('/{report}', [ReportController::class, 'destroy']);
         Route::put('/{report}', [ReportController::class, 'update']);
         Route::post('', [ReportController::class, 'store']);
         Route::get('', [ReportController::class, 'index']);
+        
     });
 
 

@@ -14,6 +14,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY --chown=www-data:www-data . .
 
+RUN docker-php-ext-install pcntl
+
 RUN chmod u+x /var/www/html/entrypoint.sh
 
 EXPOSE 8000

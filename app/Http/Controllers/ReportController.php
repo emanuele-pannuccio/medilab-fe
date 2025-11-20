@@ -7,6 +7,7 @@ use App\MedicalCaseStatus;
 use App\Models\Report;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
@@ -44,6 +45,32 @@ class ReportController extends Controller
         $reports = $query->paginate(15);
 
         return ReportResource::collection($reports);
+    }
+
+    public function elaborate_document(Request $request){
+        $doctorId = 1; #auth()->user()->id;   // oppure da request
+
+        $file = $request->file('document');
+        $filename = $file->getClientOriginalName();
+
+        // Contenuto del file
+        $content = file_get_contents($file->getRealPath());
+
+        // Path su S3
+        $path = $filename;
+
+        Storage::disk('s3')->put(
+            $file->hashName(),
+            $content,
+            [
+                'Metadata' => [
+                    'doctor_id' => (string) $doctorId,
+                ],
+                'ContentType' => $file->getMimeType(),
+            ]
+        );
+
+        return  $file->hashName();
     }
 
 
